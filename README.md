@@ -202,3 +202,92 @@ ssh -p '6996' 'jabato@cacharrito02.local' -i $HOME/.ssh/cacharrito02_rsa
 # jabato@cacharrito02.local: Permission denied (publickey).
 ```
 
+6. Install Fail2ban
+
+   **Fail2ban is a tool** that detects brute-force attacks and blocks them.
+   In the previous steps, I said that an attacker could try to find your password for months, and maybe they can succeed.
+   The main purpose of Fail2ban is to avoid this.
+
+   Fail2ban will block attackers’ IP if they fail to log in more than X times.
+   You can configure the number of tries before a ban, and the ban duration.
+   Follow these steps to install Fail2ban on your Raspberry Pi:
+
+```bash
+#Raspberry
+sudo apt install fail2ban -y
+```
+
+- By default, fail2ban will ban attacker 10 min after 5 failures.
+  I think it’s ok to start, but if you want to change this, all the configuration is in the /etc/fail2ban folder.
+  Mainly in /etc/fail2ban/jail.conf:
+  `sudo nano /etc/fail2ban/jail.conf`
+- Restart the service if you change anything:
+  `sudo service fail2ban restart`
+
+7. Install a firewall
+
+   As explained in this in-depth article, [an antivirus is not mandatory on Raspberry Pi](https://raspberrytips.com/raspberry-pi-antivirus/), and Linux in general, but a firewall is a good practice if you host some critical services on it.
+
+   I’m used to installing iptables for my firewall rules, but maybe for a beginner, it’s not the easiest route to take. So, I’ll explain to you how to install ufw (**U**ncomplicated **F**ire**W**all), which is more straightforward, and then allow only what you need.
+
+   It’s a basic configuration with HTTP access for anyone, and SSH only for you, but you need to adapt this to what you want to do.
+
+   - Install the firewall package:
+      `sudo apt install ufw -y`
+
+   - Allow ssh
+
+     `sudo ufw allow 6996 `
+
+     or to ip address only:
+
+     `# Example: sudo ufw allow from 192.168.1.100 port 6996`
+
+   - (Example:) Allow Apache access for anyone:
+     `# sudo ufw allow 80`
+
+     `# sudo ufw allow 443`
+
+   - (Example:) Allow SSH access for your IP address only** (not mandatory, just to give you another example):
+     `# sudo ufw allow from 192.168.1.100 port 6996`
+     On a local network, you can get your IP address with ipconfig (Windows) or ifconfig (Linux/Mac).
+
+   - Enable the firewall:
+     `sudo ufw enable`
+
+     Be careful, this will enable the firewall now, and also on boot.
+     If you lose access to your device, you won’t be able to fix this, even after a reboot.
+     You’ll need to change the configuration directly on the Raspberry Pi (physically).
+
+   - Check that everything is fine.
+
+   https://www.digitalocean.com/community/tutorials/como-configurar-un-firewall-con-ufw-en-ubuntu-18-04-es
+
+8. Protect physical access
+
+   The last protection is obvious but often ignored when we talk about security.
+   You can configure any security protocols, firewall, and VPN from all the steps before.
+   If your Raspberry Pi is physically accessible by anyone, it’s useless.
+
+   Make sure that the Raspberry Pi can’t be stolen easily (or the SD card), and that nobody could come and plug a keyboard and screen and be logged in automatically.  
+
+   The steps to implement to protect that kind of attack will depend on your system.  
+
+   Maybe you’ll need an auto logoff after X minutes, a password in the grub boot menu, or encrypt the data on the SD card.  
+
+
+   Think about it, what could be the worst thing that could happen if someone gets access physically to your Raspberry Pi? Then find solutions to prevent this from happening.
+
+9. Check your logs regularly
+  The last two items from this list are not really protections, but more of a commitment to follow.
+  Most of the time, attacks are visible in the log files.
+  So, try to read them regularly to detect any suspicious activity. 
+
+  All logs are in the /var/log folder, but the main log files to check are:
+
+  /var/log/syslog: main log file for all services.
+  /var/log/message: whole systems log file.
+  /var/log/auth.log: all authentication attempts are logged here.
+
+  /var/log/mail.log: if you have a mail server, you’ll find a trace of recent emails sent here.
+  Any critical applications log file, for example /var/log/apache2/error.log or /var/log/mysql/error.log
