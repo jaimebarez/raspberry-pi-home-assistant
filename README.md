@@ -47,11 +47,12 @@ Mounting root "/" from raspberry into `$HOME/cacharrito01` on my mac:
 
 ```console
 ssh_port="6996"
-rpi_name="cacharrito01.local"
-sudo sshfs -p "${ssh_port}" \  
+rpi_name_short="cacharrito01"
+rpi_name="${rpi_name_short}.local"
+sudo sshfs -p "${ssh_port}" \
            -o allow_other,defer_permissions \
-           "root@${rpi_name}":/ \
-           "$HOME/cacharrito01"
+           "jabato@${rpi_name}":/ \
+           "${HOME}/${rpi_name_short}"
 ```
 
 After mounting, we use [FreeFileSync Donation Edition](https://freefilesync.org/) to copy files locally.
@@ -68,7 +69,136 @@ sudo umount "$HOME/cacharrito01"
 
 * Mount MicroSD card on the computer
 * Install Raspberry Pi Imager `brew install --cask raspberry-pi-imager`
-* 
+* `open "/Applications/Raspberry Pi Imager.app"`
 
+![raspberry-pi-imager-02](/Users/jaimebarez/Documents/RPi/repo-raspberry-smart-home/readme_files/images/raspberry-pi-imager-02.png)
 
+![raspberry-pi-imager-03](/Users/jaimebarez/Documents/RPi/repo-raspberry-smart-home/readme_files/images/raspberry-pi-imager-03.png)
+
+* Insert the SD card into Raspberry Pi SD Card Reader
+* Plug USBKeyboard/Mouse and Zigbee Dongle(In my case, wireless)
+* (I also connected the HDMI port to my screen to check everything went OK)
+* (Keep the eth0 port disconnected so wifi can be set on first boot).
+* Turn it on!
+
+![raspberry-ready](readme_files/images/raspberry-ready.jpeg)
+
+* `ssh jabato@cacharrito02.local`
+
+```bash
+# Raspberry
+sudo apt update
+sudo apt full-upgrade
+cat /proc/cpuinfo | grep Model
+#Model		: Raspberry Pi 3 Model B Plus Rev 1.3
+```
+[Security Tips](https://raspberrytips.com/security-tips-raspberry-pi/)
+
+1. Keep your system updated
+```bash
+# Raspberry
+sudo apt install unattended-upgrades 
+sudo apt install -y vim
+# sudo vim /etc/apt/apt.conf.d/50unattended-upgrades
+# Set to receive local user root mail upgrades:
+# Unattended-Upgrade::Mail "root";
+```
+For dev purposes I will mount it's filesystem:
+
+```bash
+# Local terminal:
+rpi_name_short="cacharrito02"
+rpi_name="${rpi_name_short}.local"
+sudo sshfs -p "${ssh_port}" \
+           -o allow_other,defer_permissions \
+           "jabato@${rpi_name}":/ \
+           "${HOME}/${rpi_name_short}"
+# Open finder here           
+open /Users/jaimebarez/cacharrito02
+```
+
+And update bash history file in realtime to copy paste commands to this README file:
+
+```bash
+# Raspberry
+shopt -s histappend
+PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
+```
+
+```bash
+# Raspberry
+sudo vim /etc/apt/apt.conf.d/02periodic
+# This will enable an automatic update every day.
+# We ask apt to make: update, download upgrades, install upgrades, and auto-clean every day.
+# The last line is the verbose level you’ll get in the /var/log/unattended-upgrades and email (1= low, 3=max).
+# This should be ok, you can debug your configuration with this command:
+sudo apt install mailutils -y
+sudo unattended-upgrades -d
+```
+
+2. Make sudo require a password
+
+```bash
+# Raspberry
+sudo nano /etc/sudoers.d/010_pi-nopasswd
+# jabato ALL=(ALL) PASSWD: ALL
+```
+
+3. SSH: Prevent root login
+```bash
+# Raspberry
+sudo vim  /etc/ssh/sshd_config
+# Must have commented line:
+# #PermitRootLogin prohibit-password
+```
+
+4.  SSH: Change the default port
+
+```bash
+# Raspberry
+# The SSH default port is 22.
+# So basically, attackers will create bots to make login attempts on this port.
+# To prevent this, you can change the default port and set another one:
+sudo vim /etc/ssh/sshd_config
+# Port 6996
+sudo service ssh restart
+```
+
+```bash
+# Local terminal:
+ssh -p 6996 jabato@cacharrito02.local
+```
+
+5. Use id_rsa
+
+```bash
+# Local terminal
+ssh-keygen -t rsa -f ~/.ssh/cacharrito02_rsa -b 2048	
+# Enter file in which to save the key (/Users/jaimebarez/.ssh/id_rsa): ~/.ssh/cacharrito02_rsa
+
+ssh-copy-id -p 6996 -i ~/.ssh/cacharrito02_rsa jabato@cacharrito02.local
+```
+
+```bash
+# Raspberry
+sudo vim /etc/ssh/sshd_config
+# Find the following lines and change them as follows,
+# PermitRootLogin no
+# PasswordAuthentication no
+# ChallengeResponseAuthentication no
+# UsePAM no
+
+sudo systemctl reload sshd
+```
+
+```bash
+# Local terminal
+ssh -p '6996' 'jabato@cacharrito02.local' -i $HOME/.ssh/cacharrito02_rsa
+
+# This is OK:
+# ➜  ~ ssh -p '6996' 'root@cacharrito02.local' -i $HOME/.ssh/cacharrito02_rsa
+# root@cacharrito02.local: Permission denied (publickey).
+# ➜  ~ ssh -p '6996' 'jabato@cacharrito02.local' -i $HOME/.ssh/cacharrito02_rsa  -o PubKeyAuthentication=no
+# jabato@cacharrito02.local: Permission denied (publickey).
+```
 
