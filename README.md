@@ -306,4 +306,78 @@ sudo systemctl enable docker.service
 sudo systemctl enable containerd.service
 # Test with 'systemctl status docker.service'
 sudo docker run hello-world
+
+# All OK:
+sudo ufw status
+sudo service fail2ban status
+
+# Speer tests and ip config
 ```
+
+```bash
+# Raspberry
+# Some commands:
+sudo iwlist wlan0 scan | grep ESSID
+sudo vim /etc/wpa_supplicant/wpa_supplicant.conf 
+ifconfig wlan0
+iwgetid
+
+# DNS
+cat /etc/resolv.conf
+# Speed test
+sudo apt install speedtest-cli
+speedtest
+
+ip r | grep default
+# Set manual IP for later port forwarding in router:
+sudo vim /etc/dhcpcd.conf
+```
+
+(By the way, now to mount:)
+
+```bash
+# Local terminal
+ssh_port="6996"
+rpi_name_short="cacharrito02"
+rpi_name="${rpi_name_short}.local"
+sudo sshfs -p "${ssh_port}" \
+           -o allow_other,defer_permissions \
+           -o IdentityFile=$HOME/.ssh/cacharrito02_rsa \
+           "jabato@${rpi_name}":/ \
+           "${HOME}/${rpi_name_short}"
+
+```
+
+```bash
+# Raspberry
+sudo vim /etc/dhcpcd.conf
+# interface wlan0
+# static ip_address=192.168.1.202/24
+# static routers=192.168.1.1
+# static domain_name_servers=192.168.1.1 80.58.61.254 80.58.61.250 9.9.9.9 1.1.1.1 8.8.8.8
+sudo reboot
+ip r | grep default
+cat /etc/resolv.conf
+
+
+# Install Portainer
+
+sudo docker run -itd -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /docker/portainer/data:/data portainer/portainer-ce:latest
+
+# For the moment:
+sudo ufw allow 9443
+sudo ufw allow 8000
+sudo ufw allow 9000
+sudo ufw delete allow 8000
+sudo ufw delete allow 9000
+
+```
+
+Web browser to: https://cacharrito02.local:9443/#!/init/admin
+
+![portainer-01](readme_files/images/portainer-01.png)
+
+HTTPS only forcing (Apply Changes):
+![portainer-02](readme_files/images/portainer-02.png)
+
+(DIsable anonymous collection of statistics)
