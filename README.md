@@ -65,7 +65,7 @@ mount
 sudo umount "$HOME/cacharrito01"
 ```
 
-### Install Operating System.
+### Install Operating System
 
 * Mount MicroSD card on the computer
 * Install Raspberry Pi Imager `brew install --cask raspberry-pi-imager`
@@ -92,7 +92,7 @@ sudo apt full-upgrade
 cat /proc/cpuinfo | grep Model
 #Model		: Raspberry Pi 3 Model B Plus Rev 1.3
 ```
-[Security Tips](https://raspberrytips.com/security-tips-raspberry-pi/)
+## [Security Tips](https://raspberrytips.com/security-tips-raspberry-pi/)
 
 1. Keep your system updated
 ```bash
@@ -279,9 +279,9 @@ sudo apt install fail2ban -y
    Think about it, what could be the worst thing that could happen if someone gets access physically to your Raspberry Pi? Then find solutions to prevent this from happening.
 
 9. Check your logs regularly
-  The last two items from this list are not really protections, but more of a commitment to follow.
-  Most of the time, attacks are visible in the log files.
-  So, try to read them regularly to detect any suspicious activity. 
+    The last two items from this list are not really protections, but more of a commitment to follow.
+    Most of the time, attacks are visible in the log files.
+    So, try to read them regularly to detect any suspicious activity. 
 
   All logs are in the /var/log folder, but the main log files to check are:
 
@@ -291,3 +291,19 @@ sudo apt install fail2ban -y
 
   /var/log/mail.log: if you have a mail server, you’ll find a trace of recent emails sent here.
   Any critical applications log file, for example /var/log/apache2/error.log or /var/log/mysql/error.log
+
+## Install docker
+
+```bash
+# Raspberry
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# 'sudo systemctl start docker' if error on 'sudo docker ps'
+
+# Automatic loading service at startup:
+sudo systemctl enable docker.service
+sudo systemctl enable containerd.service
+# Test with 'systemctl status docker.service'
+sudo docker run hello-world
+```
