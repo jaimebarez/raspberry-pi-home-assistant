@@ -71,9 +71,9 @@ sudo umount "$HOME/cacharrito01"
 * Install Raspberry Pi Imager `brew install --cask raspberry-pi-imager`
 * `open "/Applications/Raspberry Pi Imager.app"`
 
-![raspberry-pi-imager-02](/Users/jaimebarez/Documents/RPi/repo-raspberry-smart-home/readme_files/images/raspberry-pi-imager-02.png)
+![raspberry-pi-imager-02](readme_files/images/raspberry-pi-imager-02.png)
 
-![raspberry-pi-imager-03](/Users/jaimebarez/Documents/RPi/repo-raspberry-smart-home/readme_files/images/raspberry-pi-imager-03.png)
+![raspberry-pi-imager-03](readme_files/images/raspberry-pi-imager-03.png)
 
 * Insert the SD card into Raspberry Pi SD Card Reader
 * Plug USBKeyboard/Mouse and Zigbee Dongle(In my case, wireless)
