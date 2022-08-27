@@ -361,8 +361,22 @@ cat /etc/resolv.conf
 
 
 # Install Portainer
+sudo mkdir -p /docker/portainer
+sudo tee /docker/portainer/docker-compose.yml <<EOF
+version: '3.3'
+services:
+    portainer-ce:
+        ports:
+            - '9443:9443'
+        container_name: portainer
+        restart: always
+        volumes:
+            - '/var/run/docker.sock:/var/run/docker.sock'
+            - '/docker/portainer/data:/data'
+        image: 'portainer/portainer-ce:latest'
+        command: '--http-disabled'
 
-sudo docker run -itd -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v /docker/portainer/data:/data portainer/portainer-ce:latest
+EOF
 
 # For the moment:
 sudo ufw allow 9443
@@ -371,9 +385,27 @@ sudo ufw allow 9000
 sudo ufw delete allow 8000
 sudo ufw delete allow 9000
 
+sudo docker compose -f /docker/portainer/docker-compose.yml up --detach
+# sudo docker compose -f /docker/portainer/docker-compose.yml dow
+# TODO self signed certificate HTTPS
+# openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 365
+# https://it-infrastructure.solutions/deploying-portainer/
+
+
+# TODO 
+# portainer  | time="2022-08-27T14:29:30Z" level=info msg="Encryption key file `portainer` not present"
+# portainer  | time="2022-08-27T14:29:30Z" level=info msg="Proceeding without encryption key"
 ```
 
-Web browser to: https://cacharrito02.local:9443/#!/init/admin
+Web browser to: https://cacharrito02.local:9443/
+
+# What is Portainer?
+
+[Portainer](https://github.com/portainer/portainer) is a lightweight management UI that allows you to easily manage your different Docker environments.
+
+Portainer provides an easy and simple solution for managing Docker containers and Swarm services through a web interface. Portainer supports a wide range of features for managing the Docker containers, such as managing the creation and deletion of Swarm services, user authentication, authorizations, connecting, executing commands in the console of running containers, and viewing containers’ logs.
+
+https://cacharrito02.local:9443
 
 ![portainer-01](readme_files/images/portainer-01.png)
 
@@ -381,3 +413,87 @@ HTTPS only forcing (Apply Changes):
 ![portainer-02](readme_files/images/portainer-02.png)
 
 (DIsable anonymous collection of statistics)
+
+Portainer SSL Certificate
+
+# sudo ufw disable # For disabling
+
+![portainer-04](readme_files/images/portainer-04.png)
+
+![portainer-05](readme_files/images/portainer-05.png)
+
+
+
+## Install eclipse-mosquitto and zigbee2mqtt
+
+
+
+Eclipse Mosquitto is an open source (EPL/EDL licensed) message broker that implements the MQTT protocol versions 5.0, 3.1.1 and 3.1. Mosquitto is lightweight and is suitable for use on all devices from low power single board computers to full servers.
+
+The MQTT protocol provides a lightweight method of carrying out messaging using a publish/subscribe model. This makes it suitable for Internet of Things messaging such as with low power sensors or mobile devices such as phones, embedded computers or microcontrollers.
+
+
+
+```bash
+
+# Check existence/dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_d46b031fef93eb118121a75b3d98b6d1-if00-port0
+
+sudo mkdir -p /docker/zigbee2mqtt-stack
+```
+Copy:
+
+ sudo cp -R /home/jabato/delete/zigbee2mqtt/ /docker/zigbee2mqtt-stack
+
+```yml
+version: '2'
+services:
+  mqtt:
+    container_name: mosquitto
+    image: eclipse-mosquitto:latest
+    restart: unless-stopped
+    volumes:
+      - "/docker/zigbee2mqtt-stack/mosquitto-data:/mosquitto/data"
+      - "/docker/zigbee2mqtt-stack/mosquitto-log:/mosquitto/log"
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    command: "mosquitto -c /mosquitto-no-auth.conf"
+
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    restart: always
+    image: koenkk/zigbee2mqtt
+    volumes:
+      - /docker/zigbee2mqtt-stack/zigbee2mqtt-data:/app/data
+      - /run/udev:/run/udev:ro
+    ports:
+      - 8080:8080
+    environment:
+      - TZ=Europe/Madrid
+    group_add:
+      - dialout
+    devices:
+      - /dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_d46b031fef93eb118121a75b3d98b6d1-if00-port0:/dev/ttyUSB0
+
+```
+
+![portainer-07](readme_files/images/portainer-07.png)
+
+Create stack
+
+`sudo ufw allow 8080`
+
+![portainer-08](readme_files/images/portainer-08.png)
+
+Receiving humidity, buttons...
+
+![zigbee-to-mqtt-01](readme_files/images/zigbee-to-mqtt-01.png)
+
+
+
+https://www.zigbee2mqtt.io/guide/getting-started/#prerequisites
+
+
+
+![zigbee-to-mqtt-02](readme_files/images/zigbee-to-mqtt-02.png)
+
